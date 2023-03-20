@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="OrderMapper">
+
+	<!-- 상품 한 개 주문하기 - 주문 내역 테이블 -->
+	<insert id="oneGoodsOrder" parameterType="OrderinfoDTO">
+		INSERT INTO ORDERINFO
+		VALUES(
+		<choose>	
+			<when test="num == 0">
+				ORDERINFO_SEQ.nextval, 
+			</when>
+			<otherwise>
+				#{num}, 
+			</otherwise>
+		</choose>
+			#{userid}, 
+			#{gcode}, #{gname}, #{bcategory}, #{vcategory}, #{gprice}, #{gamount}, 
+			#{ordername}, #{post}, #{addr1}, #{addr2}, #{phone1}, #{phone2}, #{phone3}, #{paymethod}, SYSDATE, #{gimage}
+		)
+		
+		<selectKey resultType="int" keyProperty="num" order="AFTER">
+			SELECT ORDERINFO_SEQ.currval FROM DUAL
+		</selectKey>
+	</insert>
+	
+	<!-- 상품 한 개 주문하기 - 주문 관리 테이블 -->
+	<insert id="oneOrderState" parameterType="OrderstateDTO">	<!-- 해당 주문의 처리 상태 -->
+		INSERT INTO ORDERSTATE (num, post, addr1, addr2)
+		VALUES(
+			#{num}, #{post}, #{addr1}, #{addr2}
+		)
+	</insert>
+	
+	<!-- 도매 상품의 가격 가져오기 -->
+	<select id="getBPrice" parameterType="String" resultType="BundleDTO">
+		SELECT * FROM BUNDLE WHERE GCODE = #{gcode}
+	</select>
+	
+	<!-- ********** -->
+	<!-- 관리자 기능 -->
+	
+	<!-- 모든 주문 내역 가져오기 - 주문 내역 테이블 -->
+	<select id="getOrders" resultType="OrderinfoDTO">
+		SELECT * FROM ORDERINFO ORDER BY NUM
+	</select>
+	
+	<!-- 모든 주문 내역 가져오기 - 주문 관리 테이블 -->
+	<select id="getOrderStates" resultType="OrderstateDTO">
+		SELECT * FROM ORDERSTATE ORDER BY NUM
+	</select>
+	
+	<!-- 주문 처리 상태 변경 -->
+	<update id="changeOrderstate" parameterType="Map">
+		UPDATE ORDERSTATE 
+		<choose>	
+			<when test="o_state == 'null'">	<!-- 주문 미승인 -->
+				SET o_state = NULL 
+			</when>
+			<otherwise>
+				SET o_state = #{o_state} 
+			</otherwise>
+		</choose>
+		WHERE num = #{num}
+	</update>
+	
+	<!-- 주문 번호로 주문 내역 검색 -->
+	<select id="getOrderByNum" resultType="OrderinfoDTO">
+		SELECT * FROM ORDERINFO WHERE NUM = #{num}
+	</select>
+	
+	<!-- 주문 번호로 주문 처리 상태 검색 -->
+	<select id="getOrderstateByNum" resultType="OrderstateDTO">
+		SELECT * FROM ORDERSTATE WHERE NUM = #{num}
+	</select>
+	
+	<!-- 주문 반려 사유 업데이트 -->
+	<update id="updateReIssue" parameterType="Map">
+		UPDATE ORDERSTATE 
+		<choose>
+			<when test="re_issue == 'null'">
+				SET re_issue = NULL 
+			</when>
+			<otherwise>
+				SET re_issue = #{re_issue} 
+			</otherwise>
+		</choose>
+		WHERE num = #{num}
+	</update>
+
+</mapper>
